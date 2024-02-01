@@ -1,0 +1,4 @@
+genetski nasao najbolje rjesenje
+Finalno rjesenje: 1 0 1 1 1 0 1 0 1 0 1 0 1 0 1 0 0 1 0 1 1 0 0 1 0 1 0 1 0 0 0
+
+primijenio sam genetski algoritam zajedno sa simuliranim kaljenjem gdje ako genetski algoritam pronadje skoro pa odlicno rjesenje ja pokrenem simulirano kaljenje da ono od te tacke pokusa da nadje najbolje.

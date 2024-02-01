@@ -1,0 +1,103 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <time.h>
+
+#define POPULATION_SIZE 75
+#define DIMENSIONS 6
+
+double xCoordinates[] = { -15, -10, -5, 0, 5, 10, 15, 15, 15, 15, 15, 15, 15, 10, 5, 0, -5, -10, -15, -15, -15, -15, -15, -15 };
+double yCoordinates[] = { -15, -15, -15, -15, -15, -15, -15, -10, -5, 0, 5, 10, 15, 15, 15, 15, 15, 15, 15, 10, 5, 0, -5, -10 };
+double targetValues[] = { -0.09940112332480822, -0.09570265063923192, -0.07782620994584906, -0.044595775065571636, -0.008470411838648773, -0.0013292572938769093, -0.01402876134848341, 0.0011785680597112547, -0.0016096599564817682, -0.03141072397571561, -0.05773121434057853, -0.07098734083487862, -0.07421256224434619, -0.09674779542915338, -0.13216942328836218, -0.18406033359301877, -0.24214426775005213, -0.25978279767024376, -0.2186443973931424, -0.3289283483195699, -0.4205252223787085, -0.32130499477499636, -0.205134242990832, -0.13760381018149595 };
+
+int areEqual(double* arr1, double* arr2) {
+    for (int i = 0; i < DIMENSIONS; i++) {
+        if (arr1[i] != arr2[i]) return 0;
+    }
+    return 1;
+}
+
+double calculateDistance(double x1, double y1, double x2, double y2) {
+    return sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
+}
+
+double objectiveFunction(double* vector) {
+    double sum = 0, amp1 = vector[4], amp2 = vector[5], point1x = vector[0], point1y = vector[1], point2x = vector[2], point2y = vector[3];
+    for (int i = 0; i < sizeof(targetValues) / sizeof(targetValues[0]); i++) {
+        double distance1 = calculateDistance(xCoordinates[i], yCoordinates[i], point1x, point1y);
+        double distance2 = calculateDistance(xCoordinates[i], yCoordinates[i], point2x, point2y);
+        if (distance1 == 0 || distance2 == 0) return INT_MAX;
+        sum += pow((amp1 / distance1 + amp2 / distance2 - targetValues[i]), 2);
+    }
+    return sum;
+}
+
+void performIteration(double population[POPULATION_SIZE][DIMENSIONS], double newPopulation[POPULATION_SIZE][DIMENSIONS]) {
+    for (int i = 0; i < POPULATION_SIZE; i++) {
+        double* currentAgent = population[i];
+        double* randomAgent1, * randomAgent2, * randomAgent3;
+        do { randomAgent1 = population[rand() % POPULATION_SIZE]; } while (areEqual(currentAgent, randomAgent1));
+        do { randomAgent2 = population[rand() % POPULATION_SIZE]; } while (areEqual(currentAgent, randomAgent2) || areEqual(randomAgent1, randomAgent2));
+        do { randomAgent3 = population[rand() % POPULATION_SIZE]; } while (areEqual(currentAgent, randomAgent3) || areEqual(randomAgent1, randomAgent3) || areEqual(randomAgent2, randomAgent3));
+
+        double trialVector[DIMENSIONS];
+        int randomIndex = rand() % DIMENSIONS;
+        for (int j = 0; j < DIMENSIONS; j++) {
+            double candidateValue = randomAgent1[j] + (randomAgent2[j] - randomAgent3[j]) * 0.8;
+            int mutationChance = rand() % 100;
+            if ((randomIndex == j || mutationChance < 90) && (candidateValue >= -15 && candidateValue <= 15)) {
+                trialVector[j] = candidateValue;
+            }
+            else {
+                trialVector[j] = currentAgent[j];
+            }
+        }
+
+        double objFuncValueTrial = objectiveFunction(trialVector);
+        double objFuncValueAgent = objectiveFunction(currentAgent);
+
+        if (objFuncValueTrial <= objFuncValueAgent) {
+            for (int j = 0; j < DIMENSIONS; j++) {
+                newPopulation[i][j] = trialVector[j];
+            }
+        }
+        else {
+            for (int j = 0; j < DIMENSIONS; j++) {
+                newPopulation[i][j] = currentAgent[j];
+            }
+        }
+
+        if (objFuncValueTrial < 1e-14 || objFuncValueAgent < 1e-14) {
+
+            printf("Found solution with tolerance less than %e\n", 1e-14);
+            printf("%e\n", objFuncValueTrial);
+            printf("Solution: ");
+            for (int j = 0; j < DIMENSIONS; j++) {
+                printf("%f ", (objFuncValueTrial < 1e-14 ? trialVector[j] : currentAgent[j]));
+            }
+            printf("\n");
+            exit(0);
+        }
+    }
+}
+
+int main() {
+    srand(time(NULL));
+    double population[POPULATION_SIZE][DIMENSIONS], newPopulation[POPULATION_SIZE][DIMENSIONS];
+    for (int i = 0; i < POPULATION_SIZE; i++) {
+        for (int j = 0; j < DIMENSIONS; j++) {
+            population[i][j] = (rand() % 31) - 15;
+        }
+    }
+
+    while (1) {
+        performIteration(population, newPopulation);
+        for (int i = 0; i < POPULATION_SIZE; i++) {
+            for (int j = 0; j < DIMENSIONS; j++) {
+                population[i][j] = newPopulation[i][j];
+            }
+        }
+    }
+
+    return 0;
+}
